@@ -149,7 +149,7 @@ function s:Generate_cheat_lines(line_num)
 
 
 	
-	" if there string is not empty, 
+	" if the string is not empty, 
 	if len(l:words) > 0
 
 		let l:first_char_is_a_word = -1
