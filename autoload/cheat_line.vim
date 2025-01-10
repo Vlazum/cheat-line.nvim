@@ -1,7 +1,7 @@
 let g:cheat_line_config = {
 \							'point_to_first_char' : 1,
-\							'L1_highlight_group' : 'Ignore',
-\							'L2_highlight_group' : 'Ignore',
+\							'L1_highlight_group' : ['ErrorMsg', 'Constant'],
+\							'L2_highlight_group' : ['ErrorMsg', 'Constant'],
 \						    'L1_relative_pos' : -1,
 \						    'L2_relative_pos' : -2,	
 \						    'L1_pos_if_too_high' : 2,	
@@ -10,411 +10,342 @@ let g:cheat_line_config = {
 \						    'L2_pos_if_too_low' : -2,	
 \						  }
 
-function cheat_line#Setup (input_config)
-	for key in keys(g:cheat_line_config)
-		if has_key(a:input_config, key)
-			let g:cheat_line_config[key] = a:input_config[key]
-		endif
-	endfor
-endfunction
-
 let g:cheat_line_enabled = 0 
 let s:cheat_line_enabled = 0 
 
 let s:mark_ns = nvim_create_namespace('cheat_line')
+
+" marks for virtual text entities
 let s:mark_id_1 = 0
 let s:mark_id_2 = 0
 
-function s:Refine_divider (divider)
-	if len(a:divider) == 1
-		if a:divider[0] == ' '
-			return [' ']
-		else
-			if a:divider[0] == '	'
-				return '	'
-			else
-				return ['D']
-			endif
-		endif
+" Refines the given word marking the beginnig and end of each element
+" replacing everything else with whitespaces.
+" i.e.
+" 
+" in:	This_is_a_word
+" out:	B            E
+"
+function Refine_word (word)
+	if strchars(a:word) == 1
+		return 'D'
 	endif
 
-	let l:result = []
+	let l:result = 'B'
 
 	let l:iter = 0
-	let l:iterations = strchars(a:divider)
-
-	let l:on_a_word = 0
-	
-	while l:iter < l:iterations
-
-		if a:divider[l:iter] == "	"
-			if l:on_a_word == 1
-				if l:result[l:iter-1] == 'B'
-					let l:result[l:iter-1] = 'D'
-				else
-					let l:result[l:iter-1] = 'E'
-				endif
-				let l:on_a_word = 0
-			endif
-
-	
-			let l:result = add(l:result, "	")
-	
-		else 
-
-			if a:divider[l:iter] == " "
-				if l:on_a_word == 1
-					if l:result[l:iter-1] == 'B'
-						let l:result[l:iter-1] = 'D'
-					else
-						let l:result[l:iter-1] = 'E'
-					endif
-					let l:on_a_word = 0
-				endif
-				let l:result = add(l:result, " ")
-			else
-				if l:on_a_word == 0
-					let l:result = add(l:result, "B")
-					let l:on_a_word = 1
-				else
-					let l:result = add(l:result, "-")
-				endif
-			endif
-
-		endif
-	
-		let l:iter = l:iter + 1
-	endwhile
-
-	if (l:result[l:iterations-1] != '	') && (l:result[l:iterations-1] != ' ')
-		if (l:result[l:iterations-1] == 'B')
-			let l:result[l:iterations-1] = 'D'
-		else 
-			let l:result[l:iterations-1] = 'E'
-		endif
-	endif
-	
-	return l:result
-endfunction
-
-function s:Refine_word(word)
-
 	let l:iterations = strchars(a:word)
-	if l:iterations == 1
-		return ['D']
-	endif 
-
-	let l:result = ['B']
-
-	let l:iter = 2
-
-	while l:iter < l:iterations
-		let l:result = add(l:result, ' ')
+	while l:iter < (l:iterations-2)
+		let l:result = l:result .. ' '
 		let l:iter = l:iter + 1
 	endwhile
 
-	let l:result = add(l:result, 'E')
+	let l:result = l:result .. 'E'
 
 	return l:result
-
 endfunction
 
-function s:Get_number_of_digits_in_a_number(number)
-	let l:result = 1
-	let l:num = a:number
-	while ((l:num / 10) >= 1)
-		let l:num = l:num / 10
-		let l:result = l:result + 1
+
+" Refines the given divider marking the beginnig and end of each element
+" replacing everything else with whitespaces.
+" i.e.
+" 
+" in:	(.. &example* )
+" out:	B E B       E D
+"
+function Refine_divider (divider)
+	let l:result = ""
+	let l:whitespaces = split(a:divider, '\S\+')
+	let l:non_whitespaces = split(a:divider, '\s\+')
+
+	if len(l:whitespaces) == 0
+		return Refine_word(l:non_whitespaces[0])
+	endif
+
+	if len(l:non_whitespaces) == 0
+		return a:divider
+	endif
+
+	let l:first_char_whitespace = -1
+	if (l:whitespaces[0][0] == a:divider[0])
+		let l:first_char_whitespace = 1
+	else
+		let l:first_char_whitespace = 0
+	endif
+
+	let l:iter = 0
+	let l:iterations = len(l:whitespaces) + len(l:non_whitespaces)
+	let l:whitespace_iter = 0
+	let l:non_whitespace_iter = 0
+	while l:iter < l:iterations
+		if (l:iter % 2) != l:first_char_whitespace
+			let l:result = l:result .. l:whitespaces[l:whitespace_iter]
+			let l:whitespace_iter = l:whitespace_iter + 1
+		else
+			let l:result = l:result .. Refine_word(l:non_whitespaces[l:non_whitespace_iter])
+			let l:non_whitespace_iter = l:non_whitespace_iter + 1
+		endif
+
+		let l:iter = l:iter + 1
 	endwhile
+
 	return l:result
 endfunction
 
-function s:Generate_cheat_lines(line_num)
-	let l:result_1 = ''
-	let l:result_2 = ''
+
+" Extends the line for it to be the same length as the current buffer
+function Stretch_to_the_buffer (input)
+
+	let l:result = a:input
+	let l:iter = strdisplaywidth(l:result)
+	while l:iter < winwidth(0)
+		let l:result = l:result .. ' '
+		let l:iter = l:iter + 1
+	endwhile
+
+	return l:result
+endfunction
+	
+
+" Processes cursor line marking the beginning and the end of each word
+" replacing everything else with whitespaces. B for beginning, E for end, D
+" for both
+" i.e.
+"
+" in:	This is the ("test") line.
+" out:	B  E BE B E BEB  EBE B  ED
+"
+function Process_line (input_line)
+
+	let l:words = split(a:input_line, '\W\+')
+	let l:dividers = split(a:input_line, '\w\+')
+
+	" cover the edgecases
+	if strchars(a:input_line) == 0
+		return Stretch_to_the_buffer("")
+	endif
+	if len(l:words) == 0
+		return Stretch_to_the_buffer(Refine_divider(l:dividers[0]))
+	endif
+	if len(l:dividers) == 0
+		return Stretch_to_the_buffer(Refine_word(l:words[0]))
+	endif
+
+	let l:first_char_word = -1
+	if (l:words[0][0] == a:input_line[0])
+		let l:first_char_word = 1
+	else
+		let l:first_char_word = 0
+	endif
+
+	let l:result = ""
+
+	let l:iter = 0
+	let l:iterations = len(l:words) + len(l:dividers)
+	let l:word_iter = 0
+	let l:divider_iter = 0
+	while l:iter < l:iterations
+		if (l:iter % 2) != l:first_char_word
+			let l:result = l:result .. Refine_word(l:words[l:word_iter]) 
+			let l:word_iter = l:word_iter + 1
+		else
+			let l:result = l:result .. Refine_divider(l:dividers[l:divider_iter]) 
+			let l:divider_iter = l:divider_iter + 1
+		endif
+
+		let l:iter = l:iter + 1
+	endwhile
+
+	return Stretch_to_the_buffer(l:result)
+endfunction
+
+
+" Inserts a character into a string
+function Insert_char_to_string (input_line, insertion_line, position)
+	let l:result = ""
+	let l:iter = 0
+
+	while l:iter < a:position+1
+		let l:result = l:result .. a:input_line[l:iter]
+		let l:iter = l:iter + 1
+	endwhile
+
+	let l:result = l:result .. a:insertion_line
+	let l:iter = a:position+1
+
+	while l:iter < strchars(a:input_line)
+		let l:result = l:result .. a:input_line[l:iter]
+		let l:iter = l:iter + 1
+	endwhile
+
+	return l:result
+endfunction
+
+" Replaces a character in a string
+function Replace_char_in_string (input_line, insertion_char, position)
+	let l:result = ""
+	let l:iter = 0
+
+	while l:iter < a:position
+		let l:result = l:result .. a:input_line[l:iter]
+		let l:iter = l:iter + 1
+	endwhile
+
+	let l:result = l:result .. a:insertion_char
+	let l:iter = a:position+1
+
+	while l:iter < strchars(a:input_line)
+		let l:result = l:result .. a:input_line[l:iter]
+		let l:iter = l:iter + 1
+	endwhile
+
+	return l:result
+endfunction
+
+
+" Generates virtual text for cheat lines 
+function Generate_cheatlines ()
+	let l:processed_line = Process_line(getline('.')) " process the cursorline
+	let l:cursor_position = nvim_win_get_cursor(0)[1]
+
 	let l:seek_char = 'N'
-	if g:cheat_line_config['point_to_first_char'] == '1'
+	if g:cheat_line_config['point_to_first_char'] == 1
 		let l:seek_char = 'B'
 	else
 		let l:seek_char = 'E'
 	endif
-	let l:current_line = getline(a:line_num)
-	let l:line_size = strchars(l:current_line)
 
-
-	" get words and dividers from the string
-	let l:words = split(l:current_line, '\W\+',)
-	let l:dividers = split(l:current_line, '\k\+',)
-	let l:segmentated_string = []
-
-
-	
-	" if the string is not empty, 
-	if len(l:words) > 0
-
-		let l:first_char_is_a_word = -1
-		let l:last_char_is_a_word = -1
-
-		if l:current_line[0] == l:words[0][0]
-			let l:first_char_is_a_word = 1
-		else
-			let l:first_char_is_a_word = 0
-		endif
-		
-		"================================================================"
-		"let l:real_last_char = l:current_line[l:line_size-1]		     "
-		"let l:last_word = l:words[len(l:words)-1]                       "
-		"let l:word_last_char = l:last_word[strchars(l:last_word)-1]     "
-		"                                                                "
-		"if l:real_last_char == l:word_last_char                         "
-		"	let l:def = 'last character is a word'                       "
-		"else                                                            "
-		"	let l:def = 'last character is not a word'                   "
-		"endif                                                           "
-		"================================================================"
-		
-		if l:current_line[l:line_size-1] == l:words[len(l:words)-1][strchars(l:words[len(l:words)-1])-1]
-			let l:last_char_is_a_word = 1
-		else
-			let l:last_char_is_a_word = 0
-		endif
-		
-		let segmentated_string = []
-
-		" combine dividers and words into one array
-		if first_char_is_a_word == 1
-			let l:segmentated_string = []
-
-			let l:iterations = 0
-			if len(l:words) < len(l:dividers)
-				let l:iterations = len(l:words)
-			else
-				let l:iterations = len(l:dividers)
-			endif
-
-			let l:iter = 0
-			while l:iter < l:iterations
-				"let l:segmentated_string = add(l:segmentated_string, l:words[l:iter])
-				let l:refined_word = s:Refine_word(l:words[l:iter])
-
-				let l:iter_2 = 0
-				let l:iterations_2 = len(l:refined_word)
-				while l:iter_2 < l:iterations_2 
-					let l:segmentated_string = add(l:segmentated_string, l:refined_word[l:iter_2])
-					let l:iter_2 = l:iter_2 + 1
-				endwhile
-
-				"let l:segmentated_string = add(l:segmentated_string, l:dividers[l:iter])
-				let l:refined_divider = s:Refine_divider(l:dividers[l:iter])
-
-				let l:iter_2 = 0
-				let l:iterations_2 = len(l:refined_divider)
-				while l:iter_2 < l:iterations_2 
-					let l:segmentated_string = add(l:segmentated_string, l:refined_divider[l:iter_2])
-					let l:iter_2 = l:iter_2 + 1
-				endwhile
-
-				let l:iter = l:iter + 1
-			endwhile
-
-			if len(l:words) == len(l:dividers)
-			else
-				if l:last_char_is_a_word == 1
-					"let l:segmentated_string = add(l:segmentated_string, l:words[l:iter])
-					let l:refined_word = s:Refine_word(l:words[l:iter])
-					
-					let l:iter_2 = 0
-					let l:iterations_2 = len(l:refined_word)
-					while l:iter_2 < l:iterations_2 
-						let l:segmentated_string = add(l:segmentated_string, l:refined_word[l:iter_2])
-						let l:iter_2 = l:iter_2 + 1
-					endwhile
-				else
-					"let l:segmentated_string = add(l:segmentated_string, l:dividers[l:iter])
-					let l:refined_divider = s:Refine_divider(l:dividers[l:iter])
-					
-					let l:iter_2 = 0
-					let l:iterations_2 = len(l:refined_divider)
-					while l:iter_2 < l:iterations_2 
-						let l:segmentated_string = add(l:segmentated_string, l:refined_divider[l:iter_2])
-						let l:iter_2 = l:iter_2 + 1
-					endwhile
-					endif
-			endif
-
-		else
-			let l:segmentated_string = []
-
-			let l:iterations = 0
-			if len(l:words) < len(l:dividers)
-				let l:iterations = len(l:words)
-			else
-				let l:iterations = len(l:dividers)
-			endif
-
-			let l:iter = 0
-			while l:iter < l:iterations
-				"let l:segmentated_string = add(l:segmentated_string, l:dividers[l:iter])
-				let l:refined_divider = s:Refine_divider(l:dividers[l:iter])
-
-				let l:iter_2 = 0
-				let l:iterations_2 = len(l:refined_divider)
-				while l:iter_2 < l:iterations_2 
-					let l:segmentated_string = add(l:segmentated_string, l:refined_divider[l:iter_2])
-					let l:iter_2 = l:iter_2 + 1
-				endwhile
-
-				"let l:segmentated_string = add(l:segmentated_string, l:words[l:iter])
-				let l:refined_word = s:Refine_word(l:words[l:iter])
-
-				let l:iter_2 = 0
-				let l:iterations_2 = len(l:refined_word)
-				while l:iter_2 < l:iterations_2 
-					let l:segmentated_string = add(l:segmentated_string, l:refined_word[l:iter_2])
-					let l:iter_2 = l:iter_2 + 1
-				endwhile
-
-				let l:iter = l:iter + 1
-			endwhile
-
-			if len(l:words) == len(l:dividers)
-			else
-				if l:last_char_is_a_word == 1
-					"let l:segmentated_string = add(l:segmentated_string, l:words[l:iter])
-					let l:refined_word = s:Refine_word(l:words[l:iter])
-					
-					let l:iter_2 = 0
-					let l:iterations_2 = len(l:refined_word)
-					while l:iter_2 < l:iterations_2 
-						let l:segmentated_string = add(l:segmentated_string, l:refined_word[l:iter_2])
-						let l:iter_2 = l:iter_2 + 1
-					endwhile
-				else
-					"let l:segmentated_string = add(l:segmentated_string, l:dividers[l:iter])
-					let l:refined_divider = s:Refine_divider(l:dividers[l:iter])
-					
-					let l:iter_2 = 0
-					let l:iterations_2 = len(l:refined_divider)
-					while l:iter_2 < l:iterations_2 
-						let l:segmentated_string = add(l:segmentated_string, l:refined_divider[l:iter_2])
-						let l:iter_2 = l:iter_2 + 1
-					endwhile
-					endif
-			endif
-
-		endif
-
-
-		let l:cursor_position = nvim_win_get_cursor(0)[1]
-
-		let l:cursor_on_tab = 0
-		if l:segmentated_string[l:cursor_position] == '	'
-			let l:cursor_on_tab = 1
-			"call insert(l:segmentated_string, l, l:cursor_position)
-			let l:iter = 1
-			while l:iter < &l:tabstop
-				call insert(l:segmentated_string, ' ', l:cursor_position)
-				let l:iter = l:iter + 1
-				let l:cursor_position = l:cursor_position + 1
-			endwhile
-		endif
-
-		let l:segmentated_string[l:cursor_position] = '^'
-
+	if l:processed_line[l:cursor_position] == '	'
+		let l:processed_line = Replace_char_in_string(l:processed_line, 'D', l:cursor_position)
 		let l:iter = 0
-		let l:iterations = len(l:segmentated_string)
-
-		let l:ent_pnt_index = 0
-		let l:cursor_point = -1 
-
-		let l:entry_points = []
-
-
-		while l:iter < l:iterations
-			if (l:segmentated_string[l:iter] == l:seek_char) || (l:segmentated_string[l:iter] == 'D')
-				let l:entry_points = add(l:entry_points, l:ent_pnt_index)
-				let l:ent_pnt_index = l:ent_pnt_index + 1
-			else
-				if l:segmentated_string[l:iter] == '^'
-					let l:cursor_point = l:ent_pnt_index
-					let l:entry_points = add(l:entry_points, l:ent_pnt_index)
-					let l:ent_pnt_index = l:ent_pnt_index + 1
-				endif
-			endif
+		while l:iter < &tabstop-1
+			let l:processed_line = Insert_char_to_string(l:processed_line, ' ', l:cursor_position-1)
 			let l:iter = l:iter + 1
 		endwhile
-
-
-
-		let l:iterations = len(l:segmentated_string)
-		let l:iter = 0
-		let l:iter_2 = 0
-		let l:skip_1 = 0
-		let l:skip_2 = 0
-
-		while l:iter < l:iterations
-			if (l:segmentated_string[l:iter] == l:seek_char) || (l:segmentated_string[l:iter] == 'D') || (l:segmentated_string[l:iter] == '^')
-				if (l:iter_2 % 2 != 0)
-					let l:skip_1 = s:Get_number_of_digits_in_a_number(abs(l:entry_points[l:iter_2] - l:cursor_point))-1
-					let l:result_1 = l:result_1 .. string(abs(l:entry_points[l:iter_2] - l:cursor_point))
-					let l:result_2 = l:result_2 .. ' '
-				else
-					let l:skip_2 = s:Get_number_of_digits_in_a_number(abs(l:entry_points[l:iter_2] - l:cursor_point))-1
-					let l:result_2 = l:result_2 .. string(abs(l:entry_points[l:iter_2] - l:cursor_point))
-					let l:result_1 = l:result_1 .. ' '
-				endif
-				let l:iter_2 = l:iter_2 + 1
-			else
-				if l:skip_2 == 0
-					if l:segmentated_string[l:iter] == '	'
-						let l:result_2 = l:result_2 .. '	'
-					else
-						let l:result_2 = l:result_2 .. ' '
-					endif
-				else
-					let l:skip_2 = l:skip_2 - 1
-				endif
-
-				if l:skip_1 == 0
-					if l:segmentated_string[l:iter] == '	'
-						let l:result_1 = l:result_1 .. '	'
-					else
-						let l:result_1 = l:result_1 .. ' '
-					endif
-				else
-					let l:skip_1 = l:skip_1 - 1
-				endif
-			endif
-			let l:iter = l:iter + 1
-		endwhile
-
-	endif
-	
-	if (strchars(l:result_1) != 0)
-
-		let l:iterations = strdisplaywidth(getline(s:line_num_1+1))
-		let l:iter = strdisplaywidth(l:result_1)
-
-		while l:iter < l:iterations 
-			let l:result_1 = l:result_1 .. ' '
-			let l:iter = l:iter + 1
-		endwhile
-
-		let l:iterations = strdisplaywidth(getline(s:line_num_2+1))
-		let l:iter = strdisplaywidth(l:result_2)
-
-		while l:iter < l:iterations
-			let l:result_2 = l:result_2 .. ' '
-			let l:iter = l:iter + 1
-		endwhile
-
+	else
+		let l:processed_line = Replace_char_in_string(l:processed_line, 'D', l:cursor_position)
 	endif
 
-	let l:result = [l:result_1, l:result_2]
+	
+	let l:iter = 0
+	let l:char_count = 0
+	let l:iterations = nvim_win_get_cursor(0)[1]
 
-	return l:result
+	while l:iter < l:iterations
+		if (l:processed_line[l:iter] == l:seek_char) || (l:processed_line[l:iter] == 'D')
+			let l:char_count = l:char_count + 1
+		endif
+		let l:iter = l:iter + 1
+	endwhile
+	let l:cursor_relative_pos = l:char_count
+
+
+	let l:line_1 = [["", ""]]
+	let l:line_2 = [["", ""]]
+	let l:line_1_hl_group = 0
+	let l:line_2_hl_group = 0
+
+	let l:skip_char = 0
+	let l:char_count = 0
+	let l:iterations = strchars(l:processed_line)
+	let l:iter = 0
+
+	while l:iter < l:iterations
+
+		if (l:processed_line[l:iter] == l:seek_char) || (l:processed_line[l:iter] == 'D')
+			let l:mark_num = abs(l:char_count - l:cursor_relative_pos) % 100 
+			let l:char_count = l:char_count + 1
+
+			if l:char_count % 2 == 0
+
+				if l:mark_num > 9
+					let l:skip_char = 1
+				endif
+
+				let l:line_1[len(l:line_1)-1][0] = l:line_1[len(l:line_1)-1][0] .. string(l:mark_num)
+
+				let l:line_1[len(l:line_1)-1][1] = g:cheat_line_config['L1_highlight_group'][l:line_1_hl_group]
+				let l:line_1_hl_group = (l:line_1_hl_group + 1) % 2
+
+				let l:line_1 = add(l:line_1, ["", ""])
+
+			else
+				if l:skip_char == 0
+					let l:line_1[len(l:line_1)-1][0] = l:line_1[len(l:line_1)-1][0] .. ' '
+				else
+					let l:skip_char = 0
+				endif
+			endif
+
+		else
+
+			if l:processed_line[l:iter] == '	'
+				let l:line_1[len(l:line_1)-1][0] = l:line_1[len(l:line_1)-1][0] .. '	'
+			else
+				if l:skip_char == 0
+					let l:line_1[len(l:line_1)-1][0] = l:line_1[len(l:line_1)-1][0] .. ' '
+				endif
+			endif
+			let l:skip_char = 0
+
+		endif
+
+		let l:iter = l:iter + 1
+	endwhile
+
+
+	let l:skip_char = 0
+	let l:char_count = 0
+	let l:iterations = strchars(l:processed_line)
+	let l:iter = 0
+
+	while l:iter < l:iterations
+
+		if (l:processed_line[l:iter] == l:seek_char) || (l:processed_line[l:iter] == 'D')
+			let l:mark_num = abs(l:char_count - l:cursor_relative_pos) % 100 
+			let l:char_count = l:char_count + 1
+
+			if l:char_count % 2 != 0
+
+				if l:mark_num > 9
+					let l:skip_char = 1
+				endif
+
+				let l:line_2[len(l:line_2)-1][0] = l:line_2[len(l:line_2)-1][0] .. string(l:mark_num)
+
+				let l:line_2[len(l:line_2)-1][1] = g:cheat_line_config['L1_highlight_group'][l:line_2_hl_group]
+				let l:line_2_hl_group = (l:line_2_hl_group + 1) % 2
+
+				let l:line_2 = add(l:line_2, ["", ""])
+			else
+				if l:skip_char == 0
+					let l:line_2[len(l:line_2)-1][0] = l:line_2[len(l:line_2)-1][0] .. ' '
+				else
+					let l:skip_char = 0
+				endif
+			endif
+
+		else
+
+			if l:processed_line[l:iter] == '	'
+				let l:line_2[len(l:line_2)-1][0] = l:line_2[len(l:line_2)-1][0] .. '	'
+			else
+				if l:skip_char == 0
+					let l:line_2[len(l:line_2)-1][0] = l:line_2[len(l:line_2)-1][0] .. ' '
+				endif
+			endif
+			let l:skip_char = 0
+
+		endif
+
+		let l:iter = l:iter + 1
+	endwhile
+
+	return [l:line_1, l:line_2]
 endfunction
 
+
+" Recalculates cheat line on update
 function cheat_line#Update_cheat_line()
 
 		let s:line_num_1 = nvim_win_get_cursor(0)[0]-1 + g:cheat_line_config['L1_relative_pos']
@@ -440,9 +371,9 @@ function cheat_line#Update_cheat_line()
 			endif
 		endif
 
-		let l:res = s:Generate_cheat_lines (nvim_win_get_cursor(0)[0])
-		let s:string_1 = l:res[0]
-		let s:string_2 = l:res[1]
+		let l:virt_text_list = Generate_cheatlines()
+		let l:virt_text_1 = l:virt_text_list[0]
+		let l:virt_text_2 = l:virt_text_list[1]
 
 		let s:mark_id_1 = nvim_buf_set_extmark
 					\(
@@ -451,7 +382,7 @@ function cheat_line#Update_cheat_line()
 					\ s:line_num_1,
 					\ 0,
 					\ { 
-					\	'virt_text' : [[s:string_1, g:cheat_line_config['L1_highlight_group']]],
+					\	'virt_text' : l:virt_text_1,
 					\	'virt_text_pos' : 'overlay',
 					\ },
 					\)
@@ -463,14 +394,27 @@ function cheat_line#Update_cheat_line()
 					\ s:line_num_2,
 					\ 0,
 					\ { 
-					\	'virt_text' : [[s:string_2, g:cheat_line_config['L2_highlight_group']]],
+					\	'virt_text' : l:virt_text_2,
 					\	'virt_text_pos' : 'overlay',
 					\ },
 					\)
 
 endfunction
 
-function cheat_line#Toggle_cheat_line()
+
+" Toggles the display of the cheat_line
+" i.e. 
+"
+"
+"       3      1 1      3    
+"  4       2    0    2      4
+"  This is the ("test") line.
+"
+" Cheat line consists of two lines pointing to the beginning or ending of
+" every word on the line. For clarity on every line each number is 
+" highlighted using one of two highlight groups
+" 
+function cheat_line#Toggle()
 	if (s:cheat_line_enabled == 0)
 
 		augroup Cheatline
@@ -480,10 +424,9 @@ function cheat_line#Toggle_cheat_line()
 		augroup END
 
 		let s:line_num_1 = nvim_win_get_cursor(0)[0]-1 + g:cheat_line_config['L1_relative_pos']
-		let s:line_num_2 =nvim_win_get_cursor(0)[0]-1 + g:cheat_line_config['L2_relative_pos']
+		let s:line_num_2 = nvim_win_get_cursor(0)[0]-1 + g:cheat_line_config['L2_relative_pos']
 
-		let l:clmn_num = nvim_win_get_cursor(0)[1]
-
+		" catch the edge cases
 		if s:line_num_1 < 0
 			let s:line_num_1 = nvim_win_get_cursor(0)[0] - 1 + g:cheat_line_config['L1_pos_if_too_high']
 		else
@@ -500,11 +443,10 @@ function cheat_line#Toggle_cheat_line()
 			endif
 		endif
 
-		let l:res = s:Generate_cheat_lines (nvim_win_get_cursor(0)[0])
-		let s:string_1 = l:res[0]
-		let s:string_2 = l:res[1]
+		let l:virt_text_list = Generate_cheatlines()
+		let l:virt_text_1 = l:virt_text_list[0]
+		let l:virt_text_2 = l:virt_text_list[1]
 
-		"'virt_text_win_col' : l:clmn_num,
 		let s:mark_id_1 = nvim_buf_set_extmark
 					\(
 					\ 0,
@@ -512,7 +454,7 @@ function cheat_line#Toggle_cheat_line()
 					\ s:line_num_1,
 					\ 0,
 					\ { 
-					\	'virt_text' : [[s:string_1, g:cheat_line_config['L1_highlight_group']]],
+					\	'virt_text' : l:virt_text_1,
 					\	'virt_text_pos' : 'overlay',
 					\ },
 					\)
@@ -524,7 +466,7 @@ function cheat_line#Toggle_cheat_line()
 					\ s:line_num_2,
 					\ 0,
 					\ { 
-					\	'virt_text' : [[s:string_2, g:cheat_line_config['L2_highlight_group']]],
+					\	'virt_text' : l:virt_text_2,
 					\	'virt_text_pos' : 'overlay',
 					\ },
 					\)
@@ -541,7 +483,23 @@ function cheat_line#Toggle_cheat_line()
 		let s:cheat_line_enabled = 0
 		let g:cheat_line_enabled = 0
 	endif
+endfunction
 
+" Updates entries in g:cheat_line_setup according to input_config
+" takes key : value pairs 
+" i.e. 
+"	call cheat_line#Setup ('L1_relative_pos' : -1, 'L2_relative_pos' : -2)
+"	will change respective values in g:cheat_line_config dictionary
+"
+"	call cheat_line#Setup ('cheat line higlight' : 'red', 'L2_relative_pos' : -2)
+"	will only change 'L2_relative_pos' entry since entry 'cheat line higlight'
+"	is not present in g:cheat_line_config dictionary
+function cheat_line#Setup (input_config)
+	for key in keys(g:cheat_line_config)
+		if has_key(a:input_config, key)
+			let g:cheat_line_config[key] = a:input_config[key]
+		endif
+	endfor
 endfunction
 
 function cheat_line#Change_pointing_mode()
@@ -550,7 +508,6 @@ function cheat_line#Change_pointing_mode()
 	else
 		let g:cheat_line_config['point_to_first_char'] = 0
 	endif
-	if (s:cheat_line_enabled == 1)
-		call cheat_line#Update_cheat_line()
-	endif
-endfunction
+
+	call cheat_line#Update_cheat_line()
+endfunc
