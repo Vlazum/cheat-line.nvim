@@ -114,7 +114,7 @@ You must run the **setup()** function for the plugin to work properly
 
 **It is also highly recommended for you to create mappings for quickly toggling cheat line**
 
-The plugin has a default mappings (`<leader>c` for  :CheatLineToggle` and `<leader>x` for `CheatLineSwitchOperationMode`) 
+The plugin has a default mappings (`<leader>c` for  `:CheatLineToggle` and `<leader>x` for `CheatLineSwitchOperationMode`) 
 Default mappings can be disabled with option `enabl_default_mappings` set to `false`
 
 It is still recommended to create some mappings even if you dislike the default ones
