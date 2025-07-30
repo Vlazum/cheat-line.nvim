@@ -6,7 +6,7 @@
 
 ## Table of contence 
 
-1. [What's new?](#what-s-new)
+1. [Whats new?](#what-s-new)
 2. [Overview](#overview)
 3. [Usage](#usage)
     1. [word-based](#word-based)
