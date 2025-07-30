@@ -287,15 +287,6 @@ function Create_autocommands ()
 									end
 								}
 							   )
-	vim.api.nvim_create_autocmd(
-								{ 'ColorScheme' },
-								{
-									group = cheat_line_augroup_id,
-									callback = function(ev)
-										cl_highlight.Create_cheat_line_highlights_if_not_defined()
-									end
-								}
-							   )
 	
 end
 
@@ -338,6 +329,16 @@ end
 function M.setup (opts)
 	cl_options = vim.tbl_deep_extend('force', cl_options, opts or {})
 	cl_highlight.Create_cheat_line_highlights()
+
+	vim.api.nvim_create_autocmd(
+								{ 'ColorScheme' },
+								{
+									--group = cheat_line_augroup_id,
+									callback = function(ev)
+										cl_highlight.Create_cheat_line_highlights_if_not_defined()
+									end
+								}
+							   )
 
 	if (cl_options.enable_default_mappings == true) then
 		Enable_default_mappings()
