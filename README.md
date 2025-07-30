@@ -6,20 +6,28 @@
 
 ## Table of contence 
 
-1. [Overview](#overview)
-2. [Usage](#usage)
+1. [What's new?](#what-s-new)
+2. [Overview](#overview)
+3. [Usage](#usage)
     1. [word-based](#word-based)
     2. [character-based](#character-based)
-3. [Installation](#installation)
+4. [Installation](#installation)
     1. [lazy](#lazy)
     2. [vim-plug](#vim-plug)
     3. [packer](#packer)
-4. [Quick-start](#quick-start)
-5. [Configuration](#configuration)
+5. [Quick-start](#quick-start)
+6. [Configuration](#configuration)
     1. [Default config](#default-config)
     2. [Line position](#line-position)
     3. [Highlight groups (built-in)](#highlight-groups-built-in)
     3. [Highlight groups (custom)](#highlight-groups-custom)
+
+## What's new? 
+* The plugin is now in LUA hooray!
+* Fixed a bug with cheat-line not working if the number of lines in buffer is less then 3
+* Fixed a bug with cheat-line going beyond window limits
+* Added new highlihgt groups
+* Added new operation mode
 
 ## Overview 
 Cheat line is a very simple lua-based neovim plugin that helps with navigating within the currently 
@@ -242,9 +250,3 @@ require('cheat-line').setup(
 > [!WARNING]
 > It generally recommended for primary and secondary highlight groups to have different color
 
-## What's new? 
-* The plugin is now in LUA hooray!
-* Fixed a bug with cheat-line not working if the number of lines in buffer is less then 3
-* Fixed a bug with cheat-line going beyond window limits
-* Added new highlihgt groups
-* Added new operation mode
