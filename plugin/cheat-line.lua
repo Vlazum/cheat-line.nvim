@@ -1,0 +1,5 @@
+vim.api.nvim_create_user_command('CheatLineEnable', "lua require('cheat-line').Enable_cheat_line()", {})
+vim.api.nvim_create_user_command('CheatLineDisable', "lua require('cheat-line').Disable_cheat_line()", {})
+vim.api.nvim_create_user_command('CheatLineToggle', "lua require('cheat-line').Toggle_cheat_line()", {})
+vim.api.nvim_create_user_command('CheatLineSwitchPointingMode', "lua require('cheat-line').Change_pointing_mode()", {})
+vim.api.nvim_create_user_command('CheatLineSwitchOperationMode', "lua require('cheat-line').Switch_operation_mode()", {})

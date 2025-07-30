@@ -1,52 +1,237 @@
+
 # cheat-line.nvim
+***made with <3***
 
-Cheat line is a very simple vimscript based neovim plugin that helps with navigating within the currently 
-selected line. Cheat line consists of two separate strings located above the cursor line by default. They 
-point to the beginning of each word within that line with numbers representing their position relative to 
-the cursor. Each line uses two highlight groups for number marks for better clarity.
+![IMG](images/output.gif)
 
-![image](https://github.com/user-attachments/assets/7d890386-8d7d-40bf-b50e-fa1a5917c5b8)
+## Table of contence 
 
-## Usage
-To toggle cheat line use `ToggleCheatLine()` custom command. Type number above the beginning of the word 
-you would like to navigate to then press `w` or `b` depending on weather the word is in front or behind 
-the cursor. 
+1. [Overview](#overview)
+2. [Usage](#usage)
+    1. [word-based](#word-based)
+    2. [character-based](#character-based)
+3. [Installation](#installation)
+    1. [lazy](#lazy)
+    2. [vim-plug](#vim-plug)
+    3. [packer](#packer)
+4. [Quick-start](#quick-start)
+5. [Configuration](#configuration)
+    1. [Default config](#default-config)
+    2. [Line position](#line-position)
+    3. [Highlight groups (built-in)](#highlight-groups-built-in)
+    3. [Highlight groups (custom)](#highlight-groups-custom)
 
-If you'd prefer for the cheat line to point to the end of the word use `ChangePointingMode()` command and 
-use `e` and `ge` instead of `w` and `b`
+## Overview 
+Cheat line is a very simple lua-based neovim plugin that helps with navigating within the currently 
+selected line. By highlighting `pivot` points with numbers it helps you quickly travel to desired position in line.
 
-## Commands
+*Are you tired of navigating humongous and hideous walls of C text mercilessly splattered on a single line?
+Have you lost all hope in finding a robust way of traversing monstrosities like this one?*
 
-`ToggleCheatLine`      - toggles the cheat line
+![IMG](images/cl_big_line_off.png)
 
-`ChangePointingMode`   - flips the value of `points_to_first_char` entry in g:cheat_line_config
+***Fear not! For the solution have already been created! 
+With new and improved cheat-lien.nvim TM you can leave your frustrations and sorrows behind!*** 
 
-`UpdateCheatLine`      - updates the cheat line
+![IMG](images/cl_big_line_on.png)
 
-## Setup
-Cheat line can function properly without setup however some properties can be adjusted.
-For changing properties use `cheat_line#setup()` function. The function takes dictionary of properties you would like to change and values that you would like to assign to them. For example: `call cheat_line#setup({'L1_highlight_group' : ['SpecialKey, Ignore'], 'L2_highlight_group' : ['SpecialKey, Ignore']})`
+## Usage 
 
-If the entry specified in the dictionary provided to the `cheat_line#setup()` function does not exist in g:cheat_line_config it gets ignored 
+Cheat line provides very convenient to use method for navigating within your current line
+Cheat line has two main operation modes: **word-based** and **character-based** 
 
-### adjustable properties:
+### ***word-based***
+For **word-based** mode cheat line highlights the beginning (or ending depending on your config) of each word in line just like this:
 
-| Property name          | Description                                                                                                     | Default value |        
-| ---------------------- | --------------------------------------------------------------------------------------------------------------- | ------------- |
-| `points_to_first_char` | if set to 1 points to the first character in each word of a cursor line. Points to the last character otherwise | 1             |
-| `L1_highlight_group`   | defines the highlight groups for first string of cheat line                                                     | ['ErrorMsg', 'Constant']      |
-| `L2_highlight_group`   | defines the highlight groups for second string of cheat line                                                    | ['ErrorMsg', 'Constant']      |
-| `L1_relative_pos`      | defines position of the first line relative to the cursor line                                                  | -1            |
-| `L2_relative_pos`      | defines position of the second line relative to the cursor line                                                 | -2            |
-| `L1_pos_if_too_high`    | defines position of the first line if it has gone above the line 0                                             | 2             |
-| `L2_pos_if_too_high`    | defines position of the second line if it has gone above the line 0                                            | 1             |        
-| `L1_pos_if_too_low`     | defines position of the first line if it has gone below the last line in the file                              | -1            |
-| `L2_pos_if_too_low`     | defines position of the second line if it has gone below the last line in the file                             | -2            |
-> *you can run `:so $VIMRUNTIME/syntax/hitest.vim` command to find more highlight groups*
-### suggested mappings
-Cheat line does not have any default mappings, however it is recommended to utilize mappings for better experience
+![IMG](images/cl_off_n.png)
+![IMG](images/cl_on_n.png)
+
+The numbers represent how many times you will have to press ***w*** or ***b*** to get to each highlighted point
+So to get to the beginning of the word ***mushroom*** you'd enter **2b** to go 2 words backwards, pressing **4w** would get you to word ***day*** and so on
+
+### ***character-based***
+**character-based** mode is very similar to **word-based** mode but instead of highlighting begging of each word it highlights characters in string just like this:
+
+![IMG](images/cl_cb_off.png)
+![IMG](images/cl_cb_on.png)
+
+As in the **word-based** example numbers represent how many times you'll have to move to right or left (with **l** or **h** respectfully) to get to highlighted point
+For example if you wish to go to letter **h** of the word **those** you'll need to press **28l** to go 28 characters to the right
+
+## Installation
+
+Use your plugin manager of choice to install *cheat-line.nvim*
+
+Here are few examples:
+
+### lazy
+
 ```
-nmap <silent> <leader>c :ToggleCheatLine<CR>          " for toggleing cheat line
-vmap <silent> <leader>c <ESC>:ToggleCheatLine<CR>     " for toggleing cheat line in selection mode
-map <leader>x :ChangePointingMode<CR>                 " for changeing pointing mode
+{
+    "Vlazum/cheat-line.nvim",
+    config = function ()
+        require('cheat-line').setup({
+        -- your options here
+        })
+    end
+}
 ```
+
+### vim-plug
+
+```
+
+Plug "Vlazum/cheat-line.nvim"
+...
+
+lua require('cheat-line').setup({
+\        " your options here
+\        })
+```
+
+
+### packer 
+
+```
+use {
+        "Vlazum/cheat-line.nvim", 
+        config = function ()
+            require('cheat-line').setup({
+            -- your options here
+            })
+        end
+    }
+```
+
+>[!NOTE]
+> Do note that calling setup() function is required for the plugin to function properly
+
+## Quick-start 
+
+This part is dedicated for minimal setup with minimal tinkering. Please refer to other paragraphs for more detailed information
+
+You must run the **setup()** function for the plugin to work properly 
+
+**It is also highly recommended for you to create mappings for quickly toggling cheat line**
+
+Here is an example mapping 
+
+```
+vim.keymap.set("n", "<leader>c", "<CMD>CheatLineToggle<CR>", {silent = false})
+vim.keymap.set("n", "<leader>x", "<CMD>CheatLineSwitchOperationMode<CR>", {silent = false})
+```
+
+That's pretty much it! 
+For deeper customization refer to later paragraphs 
+
+## Configuration
+
+### Default config
+
+Here is a default configuration for cheat line 
+
+```
+opts = {
+    operation_mode                = 1, -- 1: word-based    2: char-based
+    cheat_line_op_mode_default    = 1,
+    cheat_line_enabled            = false,
+
+    word_based = {
+        line_1_relative_pos = -1,
+        line_2_relative_pos = 1,
+    
+        line_1_pos_if_to_low = -1,
+        line_2_pos_if_to_low = -2,
+    
+        line_1_pos_if_to_high = 2,
+        line_2_pos_if_to_high = 1,
+    
+        line_1_hl_groups = {'CheatLine1Primary', 'CheatLine1Secondary'},
+        line_2_hl_groups = {'CheatLine2Primary', 'CheatLine2Secondary'},
+    
+        custom_hl_group_settings = {
+            cheat_line_1_primary      = "guifg=#ffffff guibg=#00000000",
+            cheat_line_1_secondary    = "guifg=#c8c8c8 guibg=#00000000",
+            cheat_line_2_primary      = "guifg=#c80000 guibg=#00000000",
+            cheat_line_2_secondary    = "guifg=#ff0000 guibg=#00000000"
+        },
+
+        point_to_begining_default_val = -1,
+        index_0_on_line               = 1,
+        point_to_begining = true,
+        show_index_0      = false
+    },
+
+    char_based = {
+        line_1_relative_pos = -1,
+        line_2_relative_pos = 1,
+
+        line_1_pos_if_to_low = -1,
+        line_2_pos_if_to_low = -2,
+
+        line_1_pos_if_to_high = 2,
+        line_2_pos_if_to_high = 1,
+
+        line_1_hl_groups = {'CheatLine1Primary_alt', 'CheatLine1Secondary_alt'},
+        line_2_hl_groups = {'CheatLine2Primary_alt', 'CheatLine2Secondary_alt'},
+
+        custom_hl_group_settings = {
+            cheat_line_1_primary    = "guifg=#ffffff guibg=#00000000",
+            cheat_line_1_secondary  = "guifg=#c8c8c8 guibg=#00000000",
+            cheat_line_2_primary    = "guifg=#ffce20 guibg=#00000000",
+            cheat_line_2_secondary  = "guifg=#b99000 guibg=#00000000"
+        },
+
+        include_less_pivot_points        = true
+    }
+}
+```
+
+### Line position
+Settings for adjusting line position exist for **word-based** mode and **character-based** mode separately 
+
+`word_based.line_1_relative_pos` and  `word_based.line_2_relative_pos` (`char_based.line_1_relative_pos` and `char_based.line_2_relative_pos` for character-based mode) determine positions of first and second lines relative to the currently selected line. A value of -1 would represent a line above the current line, and a value of 1 would represent a line below the current line
+
+Also there's an option to select relative position of the lines if they've gone out of the buffer's bounds 
+`word_based.line_1_pos_if_to_high` and `word_based.line_2_pos_if_to_high` (`char_based.line_1_pos_if_to_high` and `char_based.line_2_pos_if_to_high` for character-based mode) determine relative positions of two lines if they've gone before the beginning (first line) of the buffer or after the end (last line) of the buffer
+
+### Highlight groups (built-in)
+For better clarity and distinction each of two lines uses two alternating highlight groups 
+This is made so even if two numbers are placed one after the other it is clear they are two distinct entities
+Since there are two lines this makes the total of four highlight groups
+
+`word_based.line_1_hl_groups` and `word_based.line_2_hl_groups` (or respective options \w char_based prefix for character-based mode) take in an array of two highlight group names
+Changing them would change the highlight groups used for respective lines 
+The default options are custom highlight groups 
+
+### Highlight groups (custom)
+
+There is also an option for providing colorscheme-independent and fully customizable highlight variants for cheat line 
+Upon running setup() function eight custom highlight groups are created 
+
+The exact groups are: `CheatLine1Primary`, `CheatLine1Secondary`, `CheatLine2Primary`, `CheatLine2Secondary`, `CheatLine1Primary_alt`, `CheatLine1Secondary_alt`, `CheatLine2Primary_alt`, `CheatLine2Secondary_alt`
+
+You can alter the highlight groups via `word_based.custom_hl_group_settings` (or `char_based.custom_hl_group_settings` for character-based mode)
+Example:
+```
+require('cheat-line').setup(
+    word_based = {
+		custom_hl_group_settings = {
+			cheat_line_1_primary	= "guifg=#f6009b guibg=#00000000",
+			cheat_line_1_secondary	= "guifg=#ae006e guibg=#00000000",
+			cheat_line_2_primary	= "guifg=#f50097 guibg=#00000000",
+			cheat_line_2_secondary	= "guifg=#c20078 guibg=#00000000"
+        }
+    },
+    char_based = {
+		custom_hl_group_settings = {
+			cheat_line_1_primary	= "guifg=#f6009b guibg=#00000000",
+			cheat_line_1_secondary	= "guifg=#ae006e guibg=#00000000",
+			cheat_line_2_primary	= "guifg=#f50097 guibg=#00000000",
+			cheat_line_2_secondary	= "guifg=#c20078 guibg=#00000000"
+        }
+    }
+)
+```
+> [!WARNING]
+> It generally recommended for primary and secondary highlight groups to have different color
