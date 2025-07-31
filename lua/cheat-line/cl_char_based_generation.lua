@@ -42,6 +42,10 @@ function Process_line_cb (input_line, cursor_pos)
 		char_offset = char_offset + 1
 	end
 
+	if (char_offset == 0) then
+		return ""
+	end
+
 	return  processed_string
 end
 
@@ -367,9 +371,17 @@ function M.Generate_cheat_line_text (
 	local processed_line = ""; 
 
 	if (vim.o.virtualedit == 'all') then
-		processed_line = cl_str_func.Stretch_to_the_buffer(Process_line_cb_virtual_mode(cursor_string, cursor_pos))
+		processed_line = Process_line_cb_virtual_mode(cursor_string, cursor_pos)
+		if (processed_line == '') then
+			return { {{''}} , {{''} }}
+		end
+		processed_line = cl_str_func.Stretch_to_the_buffer(processed_line)
 	else
-		processed_line = cl_str_func.Stretch_to_the_buffer(Process_line_cb(cursor_string, cursor_pos))
+		processed_line = Process_line_cb(cursor_string, cursor_pos)
+		if (processed_line == '') then
+			return { {{''}} , {{''} }}
+		end
+		processed_line = cl_str_func.Stretch_to_the_buffer(processed_line)
 	end
 
 	local line_1, line_2, cursor_relative_pos = Split_pivot_points_between_two_lines_cb (processed_line)
