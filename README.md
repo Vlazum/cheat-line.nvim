@@ -68,6 +68,9 @@ For example if you wish to go to letter **h** of the word **those** you'll need 
 
 ## Installation
 
+>[!NOTE]
+>Neovim 0.7.0 or higher is required 
+
 Use your plugin manager of choice to install *cheat-line.nvim*
 
 Here are few examples:
