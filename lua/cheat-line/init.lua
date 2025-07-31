@@ -177,9 +177,6 @@ function Enable_char_based_cheat_line ()
 		return
 	end
 
-	local line_1 = cl_str_manipulations.Stretch_to_the_buffer("line_1")
-	local line_2 = cl_str_manipulations.Stretch_to_the_buffer("line_2")
-
 	local current_line_pos = vim.api.nvim_win_get_cursor(0)[1]-1	--getting line number
 	local cursor_position = vim.api.nvim_win_get_cursor(0)[2]		--getting cursor position on the line
 
@@ -248,56 +245,6 @@ function M.Toggle_cheat_line ()
 	end
 end
 
--- create autocommands for updating cheat line properly
-function Create_autocommands ()
-
-	-- groups for easier autocommands management
-	cheat_line_augroup_id = vim.api.nvim_create_augroup("Cheat-line-autocmds", {clear = false})
-
-	-- upon leaving buffer clean up existing extmarks so that they don't stay there indefinately
-	vim.api.nvim_create_autocmd(
-								{ 'BufLeave' },
-								{
-									group = cheat_line_augroup_id,
-									callback = function(ev)
-										cl_extmarks.Delete_extmarks()
-										cl_options.cheat_line_enabled = false
-									end
-								}
-							   )
-
-	-- upon entering new buffer rewrite extmarks by using Enable method so cheat line appears in new buffer immediately
-	vim.api.nvim_create_autocmd(
-								{ 'BufEnter' },
-								{
-									group = cheat_line_augroup_id,
-									callback = function(ev)
-										M.Enable_cheat_line()
-									end
-								}
-							   )
-
-	-- upon any curosr movement update cheat line extmarks 
-	vim.api.nvim_create_autocmd(
-								{ 'CursorMoved', 'CursorMovedI' },
-								{
-									group = cheat_line_augroup_id,
-									callback = function(ev)
-										M.Update_cheat_line()
-									end
-								}
-							   )
-	
-end
-
--- delete autocommands
-function Delete_autocommands ()
-	if (cheat_line_augroup_id ~= -1) then
-		vim.api.nvim_del_augroup_by_id(cheat_line_augroup_id)
-		cheat_line_augroup_id = -1
-	end
-end
-
 function Enable_default_mappings ()
     vim.keymap.set("n", "<leader>c", "<CMD>CheatLineToggle<CR>", { silent = false })
     vim.keymap.set("n", "<leader>x", "<CMD>CheatLineSwitchOperationMode<CR>", { silent = false })
@@ -326,6 +273,66 @@ function M.Switch_operation_mode ()
 	M.Update_cheat_line()
 end
 
+local mode_on_leave = ''
+-- create autocommands for updating cheat line properly
+function Create_autocommands ()
+
+	-- groups for easier autocommands management
+	cheat_line_augroup_id = vim.api.nvim_create_augroup("Cheat-line-autocmds", {clear = false})
+
+	-- upon leaving buffer clean up existing extmarks so that they don't stay there indefinately
+	vim.api.nvim_create_autocmd(
+								{ 'BufLeave' },
+								{
+									group = cheat_line_augroup_id,
+									callback = function(ev)
+										cl_extmarks.Delete_extmarks()
+										cl_options.cheat_line_enabled = false
+										if (cl_options.operation_mode == 1) then
+											mode_on_leave = 'wb'
+										else
+											mode_on_leave = 'cb'
+										end
+									end
+								}
+							   )
+
+	-- upon entering new buffer rewrite extmarks by using Enable method so cheat line appears in new buffer immediately
+	vim.api.nvim_create_autocmd(
+								{ 'BufEnter' },
+								{
+									group = cheat_line_augroup_id,
+									callback = function(ev)
+										M.Enable_cheat_line()
+										if (mode_on_leave == 'cb') then
+											cl_options.operation_mode = 2
+											M.Update_cheat_line()
+										end
+									end
+								}
+							   )
+
+	-- upon any curosr movement update cheat line extmarks 
+	vim.api.nvim_create_autocmd(
+								{ 'CursorMoved', 'CursorMovedI' },
+								{
+									group = cheat_line_augroup_id,
+									callback = function(ev)
+										M.Update_cheat_line()
+									end
+								}
+							   )
+	
+end
+
+-- delete autocommands
+function Delete_autocommands ()
+	if (cheat_line_augroup_id ~= -1) then
+		vim.api.nvim_del_augroup_by_id(cheat_line_augroup_id)
+		cheat_line_augroup_id = -1
+	end
+end
+
 function M.setup (opts)
 	cl_options = vim.tbl_deep_extend('force', cl_options, opts or {})
 	cl_highlight.Create_cheat_line_highlights()
@@ -333,7 +340,6 @@ function M.setup (opts)
 	vim.api.nvim_create_autocmd(
 								{ 'ColorScheme' },
 								{
-									--group = cheat_line_augroup_id,
 									callback = function(ev)
 										cl_highlight.Create_cheat_line_highlights_if_not_defined()
 									end
