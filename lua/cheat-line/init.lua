@@ -60,8 +60,6 @@ end
 
 -- update cheat line using char-based generation
 function Update_char_based_cheat_line ()
-	local line_1 = cl_str_manipulations.Stretch_to_the_buffer("line_1")
-	local line_2 = cl_str_manipulations.Stretch_to_the_buffer("line_2")
 
 	local current_line_pos = vim.api.nvim_win_get_cursor(0)[1]-1	--getting line number
 	local cursor_position = vim.api.nvim_win_get_cursor(0)[2]		--getting cursor position on the line
@@ -95,7 +93,6 @@ function Update_char_based_cheat_line ()
 								line_1_pos,
 								line_2_pos
 							 )
-
 end
 
 -- update cheat line contence based on new cursor position and/or parameters
