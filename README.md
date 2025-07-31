@@ -13,8 +13,9 @@
     2. [character-based](#character-based)
 4. [Installation](#installation)
     1. [lazy](#lazy)
-    2. [vim-plug](#vim-plug)
-    3. [packer](#packer)
+    2. [vim-plug (lua)](#vim-plug-lua)
+    3. [vim-plug (vimscript)](#vim-plug-vimscript)
+    4. [packer](#packer)
 5. [Quick-start](#quick-start)
 6. [Configuration](#configuration)
     1. [Default config](#default-config)
@@ -106,16 +107,32 @@ Here are few examples:
 }
 ```
 
-### vim-plug
+### vim-plug (lua)
 
 ```
+local Plug = vim.fn['plug#']
 
-Plug "Vlazum/cheat-line.nvim"
-...
+vim.call('plug#begin')
+Plug('Vlazum/cheat-line.nvim')
+vim.call('plug#end')
 
-lua require('cheat-line').setup({
-\        " your options here
-\        })
+require('cheat-line').setup({
+	-- your options here
+})
+```
+
+### vim-plug (vimscript)
+
+```
+call plug#begin()
+
+Plug 'Vlazum/cheat-line.nvim'
+
+call plug#end()
+
+lua require('cheat-line').setup( {  } )
+" your opts insede the braces     /\
+
 ```
 
 
