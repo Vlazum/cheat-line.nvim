@@ -26,7 +26,7 @@
 * The plugin is now in LUA hooray!
 * Fixed a bug with cheat-line not working if the number of lines in buffer is less then 3
 * Fixed a bug with cheat-line going beyond window limits
-* Added new highlihgt groups
+* Added new highlight groups
 * Added new operation mode
 
 ## Overview 
@@ -45,10 +45,18 @@ With new and improved cheat-lien.nvim TM you can leave your frustrations and sor
 
 ## Usage 
 
+### Basic stuff
+
+Run `:CheatLineToggle` to toggle the cheat-line  (or use built-in mapping `<leader>c`)
+
+Run `:CheatLineSwitchOperationMode` to switch between word-based and character-based modes (or use built-in mapping `<leader>x`)
+
+### Inner workings
+
 Cheat line provides very convenient to use method for navigating within your current line
 Cheat line has two main operation modes: **word-based** and **character-based** 
 
-### ***word-based***
+#### ***word-based***
 For **word-based** mode cheat line highlights the beginning (or ending depending on your config) of each word in line just like this:
 
 ![IMG](images/cl_off_n.png)
@@ -57,7 +65,7 @@ For **word-based** mode cheat line highlights the beginning (or ending depending
 The numbers represent how many times you will have to press ***w*** or ***b*** to get to each highlighted point
 So to get to the beginning of the word ***mushroom*** you'd enter **2b** to go 2 words backwards, pressing **4w** would get you to word ***day*** and so on
 
-### ***character-based***
+#### ***character-based***
 **character-based** mode is very similar to **word-based** mode but instead of highlighting begging of each word it highlights characters in string just like this:
 
 ![IMG](images/cl_cb_off.png)
@@ -65,6 +73,16 @@ So to get to the beginning of the word ***mushroom*** you'd enter **2b** to go 2
 
 As in the **word-based** example numbers represent how many times you'll have to move to right or left (with **l** or **h** respectfully) to get to highlighted point
 For example if you wish to go to letter **h** of the word **those** you'll need to press **28l** to go 28 characters to the right
+
+### Commands
+
+|Command | action |
+| - | - |
+| `CheatLineEnable` | Activates cheat-line |
+| `CheatLineDisable` | Deactivates cheat-line |
+| `CheatLineToggle` | Toggles cheat-line |
+| `CheatLineSwitchPointingMode` | Change from pointing to the start of a word to the end of the word in character-based mode |
+| `CheatLineSwitchOperationMode` | Switch cheat-line operation mode (between word-based and character-based)  |
 
 ## Installation
 
