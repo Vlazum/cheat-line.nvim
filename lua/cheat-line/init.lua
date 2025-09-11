@@ -35,7 +35,6 @@ function Update_word_based_cheat_line ()
 	local line_1_pos = current_line_pos+cl_options_wb.line_1_relative_pos
 	local line_2_pos = current_line_pos+cl_options_wb.line_2_relative_pos
 
-	local lines_total = vim.fn['line']('w$')-vim.fn["line"]('w0')+1
 
 	if (line_1_pos+1 < vim.fn["line"]('w0')) then
 		line_1_pos = current_line_pos + cl_options_wb.line_1_pos_if_to_high
@@ -72,7 +71,6 @@ function Update_char_based_cheat_line ()
 	local line_1_pos = current_line_pos+cl_options_wb.line_1_relative_pos
 	local line_2_pos = current_line_pos+cl_options_wb.line_2_relative_pos
 
-	local lines_total = vim.fn['line']('w$')-vim.fn["line"]('w0')+1
 
 	if (line_1_pos+1 < vim.fn["line"]('w0')) then
 		line_1_pos = current_line_pos + cl_options_wb.line_1_pos_if_to_high
@@ -136,19 +134,18 @@ function Enable_word_based_cheat_line ()
 	local line_1_pos = current_line_pos+cl_options_wb.line_1_relative_pos
 	local line_2_pos = current_line_pos+cl_options_wb.line_2_relative_pos
 
-	local lines_total = vim.fn['line']('w$')-vim.fn["line"]('w0')+1
 
 	-- catch edge cases when cheat lines goes beyond the scopes of the buffer
-	if (line_1_pos+1 < vim.fn['line']('w0')) then
+	if (line_1_pos+1 < vim.fn["line"]("w0")) then
 		line_1_pos = current_line_pos + cl_options_wb.line_1_pos_if_to_high
 	end
-	if (line_1_pos+1 > vim.fn['line']('w$')) then
+	if (line_1_pos+1 > vim.fn["line"]("w$")) then
 		line_1_pos = current_line_pos + cl_options_wb.line_1_pos_if_to_low
 	end
-	if (line_1_pos+1 < vim.fn['line']('w0')) then
+	if (line_2_pos+1 < vim.fn["line"]("w0")) then
 		line_2_pos = current_line_pos + cl_options_wb.line_2_pos_if_to_high
 	end
-	if (line_1_pos+1 > vim.fn['line']('w$')) then
+	if (line_2_pos+1 > vim.fn["line"]("w$")) then
 		line_2_pos = current_line_pos + cl_options_wb.line_2_pos_if_to_low
 	end
 
@@ -185,19 +182,17 @@ function Enable_char_based_cheat_line ()
 	local line_1_pos = current_line_pos+cl_options_wb.line_1_relative_pos
 	local line_2_pos = current_line_pos+cl_options_wb.line_2_relative_pos
 
-	local lines_total = vim.fn['line']('w$')-vim.fn["line"]('w0')+1
-
 	-- catch edge cases when cheat lines goes beyond the scopes of the buffer
-	if (line_1_pos+1 < vim.fn['lines']('w0')) then
+	if (line_1_pos+1 < vim.fn["line"]('w0')) then
 		line_1_pos = current_line_pos + cl_options_wb.line_1_pos_if_to_high
 	end
-	if (line_1_pos+1 > vim.fn['lines']('w$')) then
+	if (line_1_pos+1 > vim.fn["line"]('w$')) then
 		line_1_pos = current_line_pos + cl_options_wb.line_1_pos_if_to_low
 	end
-	if (line_1_pos+1 < vim.fn['lines']('w0')) then
+	if (line_2_pos+1 < vim.fn["line"]('w0')) then
 		line_2_pos = current_line_pos + cl_options_wb.line_2_pos_if_to_high
 	end
-	if (line_1_pos+1 > vim.fn['lines']('w$')) then
+	if (line_2_pos+1 > vim.fn["line"]('w$')) then
 		line_2_pos = current_line_pos + cl_options_wb.line_2_pos_if_to_low
 	end
 
@@ -349,4 +344,4 @@ function M.setup (opts)
 
 end
 
-return M 
+return M
