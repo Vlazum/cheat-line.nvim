@@ -239,6 +239,11 @@ opts = {
 }
 ```
 
+### Default mode
+Use `cheat_line_op_mode_default` to specify what mode cheat-line will be set to upon enabling (1 for **word-based** and 2 for **char-based**)
+> [!NOTE] 
+> settings `cheat_line_enabled` and `operation_mode`, although accessible to user **should not be modified** as they are service variables 
+
 ### Line position
 Settings for adjusting line position exist for **word-based** mode and **character-based** mode separately 
 
@@ -285,6 +290,23 @@ require('cheat-line').setup(
     }
 )
 ```
+
 > [!WARNING]
 > It generally recommended for primary and secondary highlight groups to have different color
+
+### Word-based specific settings
+
+Use `word_based.point_to_begining_default_val` to specify if the cheat-line should point to the beginning of the words by default (if set to 1 always points to the beginning of the words upon enabling cheat-line, setting it to 2 will make the line to always point to the ending of the words, if set to -1 cheat-line will save the state upon disabling and use this on next enable call)
+
+Use `word_based.show_index_0` to determine if index 0 (pointing to your cursor) should be shown
+
+Use `word_based.index_0_on_line` to determine if index 0 will be one line 1 or 2 (1 for line 1 and 2 for line 2, -1 is also a valid)
+
+>[!NOTE]
+> `char_based.point_to_begining` is a service value and **should not be modified**
+
+### Char-based specific settings
+As of now only one **char-based** specific settings is available: `char_based.include_less_pivot_points`
+Set it to `true`, to include only every second two-digit number (this option is recommended and is recommended, because it gives significantly better clarity, while sacrificing very little precision), set to `false` to include **all** numbers
+
 

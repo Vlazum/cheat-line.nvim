@@ -11,6 +11,8 @@ local cl_options_cb = cl_options.char_based
 
 local cl_str_manipulations = require("cheat-line.cl_str_manipulations")
 
+local cl_op_mode_state = -1
+
 -- update cheat line using word-based generation
 function Update_word_based_cheat_line ()
 	if (cl_options.cheat_line_enabled == false) then
@@ -208,7 +210,11 @@ end
 
 function M.Enable_cheat_line ()
 	if (cl_options.cheat_line_op_mode_default ~= -1) then
-		cl_options.operation_mode = cl_options.cheat_line_op_mode_default
+		if (cl_op_mode_state == -1) then
+			cl_options.operation_mode = cl_options.cheat_line_op_mode_default
+		else
+			cl_options.operation_mode = cl_op_mode_state
+		end
 	end
 
 	if (cl_options.operation_mode == 1) then
@@ -224,6 +230,8 @@ function M.Disable_cheat_line ()
 	end
 
 	cl_options.cheat_line_enabled = false
+
+	cl_op_mode_state = cl_options.operation_mode
 
 	cl_extmarks.Delete_extmarks()
 	Delete_autocommands()
